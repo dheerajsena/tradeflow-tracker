@@ -85,22 +85,28 @@ st.markdown("""
         font-weight: 800 !important;
     }
 
-    /* Mobile Friendly Buttons */
+    /* Mobile Friendly Buttons - Force High Contrast Visibility */
     .stButton > button {
-        width: 100%;
+        width: 100% !important;
         height: 3.8rem !important;
         border-radius: 14px !important;
         font-weight: 700 !important;
         font-size: 1.1rem !important;
-        background-color: #0f172a !important;
-        color: #ffffff !important;
+        background-color: #1e293b !important; /* Dark Slate Blue */
+        color: #ffffff !important; /* FORCED BRIGHT WHITE TEXT */
         border: none !important;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        transition: transform 0.1s ease !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+        display: block !important;
+    }
+
+    .stButton > button p {
+        color: #ffffff !important; /* Primary fix for button text visibility */
+        font-weight: 700 !important;
     }
 
     .stButton > button:active {
-        transform: scale(0.97);
+        transform: scale(0.97) !important;
+        background-color: #334155 !important;
     }
 
     /* Fix Input Fields - Removed Dark Blocks */
