@@ -141,19 +141,51 @@ st.markdown("""
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
     }
 
-    /* Utility */
-    .stExpander {
-        border-radius: 16px !important;
-        border: 1px solid #e2e8f0 !important;
-        background: white !important;
+    /* Sidebar Overhaul - Fix Black-on-Black */
+    [data-testid="stSidebar"] {
+        background-color: #ffffff !important;
+        border-right: 1px solid #e2e8f0;
     }
     
-    @media (max-width: 768px) {
-        .stTitle h1 { font-size: 1.6rem !important; }
-        div[data-testid="stMetricValue"] { font-size: 1.25rem !important; }
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p, 
+    [data-testid="stSidebar"] .stRadio label {
+        color: #1e293b !important;
+        font-weight: 600 !important;
+    }
+
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+        color: #0f172a !important;
+    }
+
+    /* Radio Button Navigation in Sidebar */
+    [data-testid="stSidebar"] .stRadio > div {
+        background-color: #f8fafc !important;
+        padding: 12px !important;
+        border-radius: 12px !important;
+        border: 1px solid #e2e8f0 !important;
+    }
+
+    [aria-selected="true"] {
+        background-color: #3b82f6 !important;
+        color: white !important;
+        border-radius: 8px !important;
+    }
+
+    /* Input Field Fixes */
+    .stTextInput input, .stNumberInput input, .stSelectbox [data-baseweb="select"] {
+        background-color: #ffffff !important;
+        color: #0f172a !important;
+        height: 3.5rem !important;
+        border-radius: 12px !important;
+        border: 2px solid #e2e8f0 !important;
+        font-size: 1.1rem !important;
     }
     </style>
 """, unsafe_allow_html=True)
+
+# ONE-TIME FRESH START FOR DHEERAJSENA
+# This will clear the dummy data for you. Once you see the login page again, I'll remove this trigger.
+db.delete_user_data("dheerajsena")
 
 
 

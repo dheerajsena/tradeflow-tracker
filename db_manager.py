@@ -94,10 +94,15 @@ def get_unique_events(user_id):
     conn.close()
     return events
 
-def wipe_system():
+def delete_user_data(username):
     conn = get_connection()
     c = conn.cursor()
-    c.execute("DELETE FROM trades")
-    c.execute("DELETE FROM users")
+    # Find user id
+    c.execute("SELECT id FROM users WHERE username = ?", (username,))
+    res = c.fetchone()
+    if res:
+        user_id = res[0]
+        c.execute("DELETE FROM trades WHERE user_id = ?", (user_id,))
+        c.execute("DELETE FROM users WHERE id = ?", (user_id,))
     conn.commit()
     conn.close()
