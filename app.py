@@ -11,73 +11,107 @@ st.set_page_config(page_title="TradeFlow Tracker", page_icon="📈", layout="cen
 # Initialize DB
 db.init_db()
 
-# Custom CSS for Enterprise Look
+# Custom CSS for Mobile-First Enterprise Look
 st.markdown("""
     <style>
-    /* Global Font */
-    html, body, [class*="css"]  {
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    }
-    
-    /* Main Background */
-    .stApp {
-        background-color: #f0f2f6; 
-    }
-    
-    /* Input Fields */
-    .stTextInput>div>div>input, .stNumberInput>div>div>input, .stSelectbox>div>div>div {
-        border-radius: 8px;
-        border: 1px solid #dfe1e5;
-    }
-    
-    /* Buttons */
-    .stButton>button {
-        border-radius: 8px;
-        height: 2.8em; 
-        font-weight: 600;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        transition: all 0.2s;
-    }
-    .stButton>button:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 6px rgba(0,0,0,0.15);
-    }
-    
-    /* Cards */
-    .trade-card {
-        background-color: white;
-        padding: 16px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        margin-bottom: 12px;
-        border-left: 5px solid #007bff; /* Default Blue */
-        transition: transform 0.2s;
-    }
-    .trade-card:hover {
-        transform: scale(1.01);
-    }
-    .trade-card.loss {
-        border-left-color: #ff4b4b; /* Red */
-    }
-    .trade-card.profit {
-        border-left-color: #00cc96; /* Green */
-    }
-    
-    /* Metrics */
-    div[data-testid="stMetric"] {
-        background-color: white;
-        padding: 15px;
-        border-radius: 10px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        text-align: center;
-    }
-    
-    /* Headers */
-    h1, h2, h3 {
+    /* Global Styles */
+    html, body, [class*="css"] {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         color: #1f2937;
+    }
+    
+    .stApp {
+        background-color: #f8fafc;
+    }
+
+    /* Mobile Responsive Header */
+    .stTitle h1 {
+        font-size: 1.8rem !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.025em;
+        margin-bottom: 1rem !important;
+    }
+
+    /* Cards & Containers */
+    .trade-card {
+        background: white;
+        padding: 1.25rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        margin-bottom: 1rem;
+        border-left: 6px solid #3b82f6;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .trade-card:active {
+        transform: scale(0.98);
+    }
+
+    .trade-card.profit { border-left-color: #10b981; }
+    .trade-card.loss { border-left-color: #ef4444; }
+
+    /* Metrics Refinement */
+    div[data-testid="stMetric"] {
+        background: white;
+        padding: 1rem !important;
+        border-radius: 12px;
+        border: 1px solid #f1f5f9;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    div[data-testid="stMetricValue"] {
+        font-size: 1.4rem !important;
+        font-weight: 700 !important;
+    }
+
+    /* Mobile Friendly Buttons */
+    .stButton > button {
+        width: 100%;
+        height: 3.5rem !important; /* Larger touch target */
+        border-radius: 12px !important;
+        font-weight: 600 !important;
+        text-transform: none;
+        letter-spacing: 0.01em;
+        background-color: #1e293b !important;
+        color: white !important;
+        border: none !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    .stButton > button:hover {
+        background-color: #334155 !important;
+        transform: translateY(-1px);
+    }
+
+    /* Input Fields for Mobile */
+    .stTextInput input, .stNumberInput input, .stSelectbox [data-baseweb="select"] {
+        height: 3.5rem !important;
+        border-radius: 12px !important;
+        border: 1px solid #e2e8f0 !important;
+        font-size: 1rem !important;
+    }
+
+    /* Tab Optimization */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
+        background-color: transparent;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        background-color: white;
+        border-radius: 8px;
+        padding: 8px 16px;
+        border: 1px solid #e2e8f0;
+    }
+
+    /* Hide Sidebar on small screens by default */
+    @media (max-width: 768px) {
+        .stMetricValue { font-size: 1.2rem !important; }
+        .stMarkdown h3 { font-size: 1.3rem !important; }
     }
     </style>
 """, unsafe_allow_html=True)
+
 
 # Session State for Auth
 if 'user_id' not in st.session_state:
@@ -134,6 +168,15 @@ def main_app():
         page = st.radio("Enterprise Navigation", ["Active Dashboard", "Advanced Analytics", "Trade History"])
         
         st.markdown("---")
+        with st.expander("🛠️ System Maintenance"):
+            if st.button("Wipe All App Data", help="Clears all trades and users"):
+                db.wipe_system()
+                st.session_state.user_id = None
+                st.session_state.username = None
+                st.success("System Reset Successful!")
+                time.sleep(1)
+                st.rerun()
+
         if st.button("Logout System"):
             st.session_state.user_id = None
             st.session_state.username = None

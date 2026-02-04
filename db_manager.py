@@ -93,3 +93,11 @@ def get_unique_events(user_id):
     events = [row[0] for row in c.fetchall()]
     conn.close()
     return events
+
+def wipe_system():
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("DELETE FROM trades")
+    c.execute("DELETE FROM users")
+    conn.commit()
+    conn.close()
