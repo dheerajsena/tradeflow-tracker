@@ -11,24 +11,43 @@ def get_connection():
 def init_db():
     conn = get_connection()
     c = conn.cursor()
-    # Users table
-    c.execute('''CREATE TABLE IF NOT EXISTS users
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  username TEXT UNIQUE NOT NULL,
-                  password_hash TEXT NOT NULL)''')
     
-    # Trades table
-    c.execute('''CREATE TABLE IF NOT EXISTS trades
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  user_id INTEGER NOT NULL,
-                  date TEXT NOT NULL,
-                  event TEXT NOT NULL,
-                  spent REAL NOT NULL,
-                  earned REAL NOT NULL,
-                  pnl REAL NOT NULL,
-                  FOREIGN KEY(user_id) REFERENCES users(id))''')
+    # 1. Versioning Table
+    c.execute('''CREATE TABLE IF NOT EXISTS schema_version
+                 (version INTEGER PRIMARY KEY)''')
     
-    conn.commit()
+    # Get current version
+    c.execute("SELECT version FROM schema_version")
+    res = c.fetchone()
+    current_version = res[0] if res else 0
+
+    # 2. Migrations
+    if current_version < 1:
+        # Initial Schema
+        c.execute('''CREATE TABLE IF NOT EXISTS users
+                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                      username TEXT UNIQUE NOT NULL,
+                      password_hash TEXT NOT NULL)''')
+        
+        c.execute('''CREATE TABLE IF NOT EXISTS trades
+                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                      user_id INTEGER NOT NULL,
+                      date TEXT NOT NULL,
+                      event TEXT NOT NULL,
+                      spent REAL NOT NULL,
+                      earned REAL NOT NULL,
+                      pnl REAL NOT NULL,
+                      FOREIGN KEY(user_id) REFERENCES users(id))''')
+        
+        c.execute("INSERT OR REPLACE INTO schema_version (version) VALUES (1)")
+        conn.commit()
+    
+    # Placeholder for future migrations
+    # if current_version < 2:
+    #     # Example: c.execute("ALTER TABLE trades ADD COLUMN tags TEXT")
+    #     # c.execute("UPDATE schema_version SET version = 2")
+    #     # conn.commit()
+
     conn.close()
 
 def hash_password(password):
@@ -81,7 +100,7 @@ def get_user_trades(user_id):
 def delete_trade(trade_id, user_id):
     conn = get_connection()
     c = conn.cursor()
-    # Ensure user owns the trade
+    # Ensure user owns the trade - critical for isolation
     c.execute("DELETE FROM trades WHERE id = ? AND user_id = ?", (trade_id, user_id))
     conn.commit()
     conn.close()
@@ -94,7 +113,17 @@ def get_unique_events(user_id):
     conn.close()
     return events
 
+def wipe_system():
+    """Wipes all data from the system. Use with caution."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("DELETE FROM trades")
+    c.execute("DELETE FROM users")
+    conn.commit()
+    conn.close()
+
 def delete_user_data(username):
+    """Deletes specific user and all their trades."""
     conn = get_connection()
     c = conn.cursor()
     # Find user id

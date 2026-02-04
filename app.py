@@ -189,9 +189,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ONE-TIME FRESH START FOR DHEERAJSENA
-# This will clear the dummy data for you. Once you see the login page again, I'll remove this trigger.
-db.delete_user_data("dheerajsena")
+# --- SESSION STATE & AUTH ---
 
 
 
@@ -250,12 +248,12 @@ def main_app():
         page = st.radio("Enterprise Navigation", ["Active Dashboard", "Advanced Analytics", "Trade History"])
         
         st.markdown("---")
-        with st.expander("🛠️ System Maintenance"):
-            if st.button("Wipe All App Data", help="Clears all trades and users"):
-                db.wipe_system()
+        with st.expander("🛠️ Account Maintenance"):
+            if st.button("Wipe My Data", help="Permanently deletes your account and all trades"):
+                db.delete_user_data(st.session_state.username)
                 st.session_state.user_id = None
                 st.session_state.username = None
-                st.success("System Reset Successful!")
+                st.success("Account successfully deleted.")
                 time.sleep(1)
                 st.rerun()
 
