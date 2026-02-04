@@ -126,157 +126,187 @@ def login_page():
 def main_app():
     # Sidebar
     with st.sidebar:
-        st.title("TradeFlow")
-        st.write(f"Logged in as **{st.session_state.username}**")
+        st.title("TradeFlow Pro 🏢")
+        st.write(f"Identity: **{st.session_state.username}**")
         st.markdown("---")
-        if st.button("Log Out"):
+        
+        # Navigation
+        page = st.radio("Enterprise Navigation", ["Active Dashboard", "Advanced Analytics", "Trade History"])
+        
+        st.markdown("---")
+        if st.button("Logout System"):
             st.session_state.user_id = None
             st.session_state.username = None
             st.rerun()
     
-    st.title("Dashboard")
-    
     # FETCH DATA
     df = db.get_user_trades(st.session_state.user_id)
-    
-    # 1. NEW ENTRY SECTION
-    with st.expander("➕ Log New Trade", expanded=True):
-        col1, col2 = st.columns(2)
-        with col1:
-            trade_date = st.date_input("Date", date.today())
-            
-            # Dynamic Event Dropdown Logic
-            user_events = db.get_unique_events(st.session_state.user_id)
-            default_events = ["ASX", "NASDAQ", "CRYPTO", "FOREX"] 
-            # Merge and Dedup, keeping user preferences
-            all_events = sorted(list(set(default_events + user_events)))
-            
-            # Default to last used if available, otherwise first item
-            # We don't have explicit 'last used' storage but we can infer from last trade
-            index = 0
-            if not df.empty:
-                last_event = df.iloc[0]['event']
-                if last_event in all_events:
-                    index = all_events.index(last_event)
-            
-            event_choice = st.selectbox(
-                "Event / Market", 
-                all_events + ["Add New..."],
-                index=index
-            )
-            
-            final_event = event_choice
-            if event_choice == "Add New...":
-                final_event = st.text_input("Enter new Event Name (e.g. NYSE)").upper()
-        
-        with col2:
-            spent = st.number_input("Amount Spent ($)", min_value=0.0, step=50.0)
-            earned = st.number_input("Amount Earned ($)", min_value=0.0, step=50.0)
-        
-        if st.button("Add Trade Entry", type="primary"):
-            if final_event and final_event != "Add New...":
-                db.add_trade(st.session_state.user_id, trade_date, final_event, spent, earned)
-                st.toast(f"Trade for {final_event} saved!", icon="✅")
-                time.sleep(1) # Let toast show
-                st.rerun() 
-            else:
-                st.warning("Please define a valid Event name.")
-
-    # 2. ANALYTICS
-    st.markdown("### Performance Overview")
     if not df.empty:
-        total_spent = df['spent'].sum()
-        total_earned = df['earned'].sum()
-        total_pnl = df['pnl'].sum()
-        roi = (total_pnl / total_spent * 100) if total_spent > 0 else 0
-        
-        # Determine Color for KPIs
-        roi_color = "normal" 
-        if roi > 0: roi_color = "off" # Streamlit metric delta colors handled automatically
-        
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Net P&L", f"${total_pnl:,.2f}", delta=f"{roi:.1f}% ROI")
-        m2.metric("Total Invested", f"${total_spent:,.2f}")
-        m3.metric("Total Return", f"${total_earned:,.2f}")
-        m4.metric("Total Trades", len(df))
-        
-        # Charts
-        tab_chart1, tab_chart2 = st.tabs(["📈 Cumulative Growth", "🥧 Market Exposure"])
-        
-        with tab_chart1:
-            # Pnl over time
-            df['date_dt'] = pd.to_datetime(df['date'])
-            daily_agg = df.groupby('date_dt')['pnl'].sum().reset_index().sort_values('date_dt')
-            daily_agg['cumulative_pnl'] = daily_agg['pnl'].cumsum()
-            
-            fig_line = px.line(
-                daily_agg, x='date_dt', y='cumulative_pnl', 
-                labels={'cumulative_pnl': 'Net P&L ($)', 'date_dt': 'Date'},
-                markers=True
-            )
-            fig_line.update_traces(line_color='#007bff', line_width=3, fill='tozeroy')
-            fig_line.update_layout(xaxis_title="", yaxis_title="", template="plotly_white", height=300)
-            st.plotly_chart(fig_line, use_container_width=True)
-            
-        with tab_chart2:
-            # PnL by Event
-            # Aggregate spent by event
-            event_agg = df.groupby('event')[['spent', 'earned']].sum().reset_index()
-            fig_pie = px.pie(event_agg, values='spent', names='event', donut=0.4) 
-            fig_pie.update_layout(template="plotly_white", height=300)
-            st.plotly_chart(fig_pie, use_container_width=True)
-    
-    else:
-        st.info("No trades data available. Log your first trade above to see analytics.")
+        df['date_dt'] = pd.to_datetime(df['date'])
+        df['month_period'] = df['date_dt'].dt.to_period('M')
+        df['month_year'] = df['date_dt'].dt.strftime('%b %Y')
 
-    # 3. HISTORY CARDS
-    st.markdown("### Recent Activity")
-    
-    if df.empty:
-         st.write("Nothing to show.")
-    else:
-        for index, row in df.iterrows():
-            # Clean PnL styling
-            pnl_val = row['pnl']
-            color_class = "loss" if pnl_val < 0 else "profit" # CSS Classes
-            pnl_str = f"${pnl_val:,.2f}"
-            if pnl_val > 0: pnl_str = f"+{pnl_str}"
+    if page == "Active Dashboard":
+        st.title("Trading Floor")
+        
+        # 1. NEW ENTRY SECTION
+        with st.expander("🆕 Register New Transaction", expanded=True):
+            col1, col2 = st.columns(2)
+            with col1:
+                trade_date = st.date_input("Execution Date", date.today())
+                
+                # Dynamic Event Dropdown Logic - CLEAN (NO DEFAULTS)
+                user_events = db.get_unique_events(st.session_state.user_id)
+                all_options = sorted(user_events) + ["<Add New Entry Type>"]
+                
+                # Default selection logic
+                index = (len(all_options)-1) # Default to Add New
+                if not df.empty:
+                    last_event = df.iloc[0]['event']
+                    if last_event in all_options:
+                        index = all_options.index(last_event)
+                
+                event_choice = st.selectbox("Symbol / Market Group", all_options, index=index)
+                
+                final_event = event_choice
+                if event_choice == "<Add New Entry Type>":
+                    final_event = st.text_input("Enter Label (e.g. BTC, ASX, NYSE)").upper()
             
-            # HTML Card Structure
-            card_html = f"""
-            <div class="trade-card {color_class}">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div style="flex-grow:1;">
-                        <span style="background-color:#eee; padding:2px 8px; border-radius:4px; font-size:0.8em; font-weight:bold; color:#555;">{row['event']}</span>
-                        <div style="margin-top:4px; font-size:0.9em; color:#666;">📅 {row['date']}</div>
-                    </div>
-                    
-                    <div style="text-align:right; margin-right: 15px;">
-                        <div style="font-size:1.1em; font-weight:bold; color: {'#00cc96' if pnl_val >= 0 else '#ff4b4b'};">
-                            {pnl_str}
+            with col2:
+                spent = st.number_input("Capital Deployed ($)", min_value=0.0, step=100.0)
+                earned = st.number_input("Gross Return ($)", min_value=0.0, step=100.0)
+            
+            if st.button("Commit to Ledger", type="primary", use_container_width=True):
+                if final_event and final_event != "<Add New Entry Type>":
+                    db.add_trade(st.session_state.user_id, trade_date, final_event, spent, earned)
+                    st.toast(f"Ledger Updated: {final_event}", icon="🚀")
+                    time.sleep(1)
+                    st.rerun()
+                else:
+                    st.warning("Please define the market type.")
+
+        # Quick Health Check
+        if not df.empty:
+            st.markdown("### Portfolio Pulse")
+            tot_s = df['spent'].sum()
+            tot_p = df['pnl'].sum()
+            tot_roi = (tot_p / tot_s * 100) if tot_s > 0 else 0
+            
+            m1, m2, m3 = st.columns(3)
+            m1.metric("Lifetime Investment", f"${tot_s:,.2f}")
+            m2.metric("Net Yield", f"${tot_p:,.2f}", delta=f"{tot_roi:.1f}%")
+            m3.metric("Entry Count", f"{len(df)}")
+
+    elif page == "Advanced Analytics":
+        st.title("Enterprise Reporting Engine")
+        
+        if df.empty:
+            st.warning("No data found. Please log trades to view analytics.")
+        else:
+            # 1. MARKET SELECTOR
+            all_markets = sorted(df['event'].unique().tolist())
+            market_filter = st.selectbox("Market Segmentation View", ["🌍 Global Portfolio"] + all_markets)
+            
+            report_df = df if market_filter == "🌍 Global Portfolio" else df[df['event'] == market_filter]
+            
+            # 2. SECTOR SPECIFIC STATS
+            st.markdown(f"#### Performance Parameters: {market_filter}")
+            s1, s2, s3, s4 = st.columns(4)
+            r_s = report_df['spent'].sum()
+            r_e = report_df['earned'].sum()
+            r_p = report_df['pnl'].sum()
+            r_roi = (r_p / r_s * 100) if r_s > 0 else 0
+            
+            s1.metric("Total Deployment", f"${r_s:,.2f}")
+            s2.metric("Gross Revenue", f"${r_e:,.2f}")
+            s3.metric("Net Profit/Loss", f"${r_p:,.2f}", delta=f"{r_roi:.2f}%")
+            s4.metric("Avg Trade Size", f"${report_df['spent'].mean():,.2f}")
+
+            st.markdown("---")
+
+            # 3. MONTHLY SEGMENTATION (P&L Reporting)
+            st.markdown("### 📊 Monthly Enterprise Reports")
+            
+            # Aggregate Monthly Stats
+            monthly_agg = report_df.groupby('month_period').agg({
+                'spent': 'sum',
+                'earned': 'sum',
+                'pnl': 'sum'
+            }).reset_index().sort_values('month_period')
+            
+            monthly_agg['month_label'] = monthly_agg['month_period'].dt.strftime('%b %Y')
+            monthly_agg['cumulative_pnl'] = monthly_agg['pnl'].cumsum()
+            
+            # Monthly Visualization
+            col_left, col_right = st.columns(2)
+            
+            with col_left:
+                st.markdown("**Individual Monthly P&L**")
+                fig_m_bar = px.bar(
+                    monthly_agg, x='month_label', y='pnl',
+                    color='pnl', color_continuous_scale=['#ff4b4b', '#00cc96'],
+                    labels={'pnl': 'Net P&L ($)', 'month_label': 'Reporting Period'}
+                )
+                fig_m_bar.update_layout(template="plotly_white", showlegend=False, height=350)
+                st.plotly_chart(fig_m_bar, use_container_width=True)
+
+            with col_right:
+                st.markdown("**Cumulative Monthly Growth**")
+                fig_c_line = px.line(
+                    monthly_agg, x='month_label', y='cumulative_pnl',
+                    markers=True, labels={'cumulative_pnl': 'Cumul. P&L ($)'}
+                )
+                fig_c_line.update_traces(line_color='#007bff', line_width=4, fill='tozeroy')
+                fig_c_line.update_layout(template="plotly_white", height=350)
+                st.plotly_chart(fig_c_line, use_container_width=True)
+
+            # 4. DATA TABLE
+            with st.expander("📄 Export Monthly Ledger Data"):
+                table_out = monthly_agg[['month_label', 'spent', 'earned', 'pnl', 'cumulative_pnl']].copy()
+                table_out.columns = ['Period', 'Total Spent', 'Total Earned', 'Monthly P&L', 'Cumulative Growth']
+                st.dataframe(table_out, hide_index=True, use_container_width=True)
+
+    elif page == "Trade History":
+        st.title("Transaction History")
+        if df.empty:
+            st.info("No records to display.")
+        else:
+            search_query = st.text_input("Search Assets...", placeholder="e.g. BTC")
+            display_df = df[df['event'].str.contains(search_query, case=False)] if search_query else df
+            
+            for _, row in display_df.iterrows():
+                sts = "profit" if row['pnl'] >= 0 else "loss"
+                p_col = "#00cc96" if row['pnl'] >= 0 else "#ff4b4b"
+                
+                card_html = f"""
+                <div class="trade-card {sts}">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <span style="font-weight:bold; color:#333;">{row['event']}</span>
+                            <div style="font-size:0.8em; color:#888;">{row['date']}</div>
                         </div>
-                        <div style="font-size:0.8em; color:#888;">
-                            Roi: {((row['earned']-row['spent'])/row['spent']*100) if row['spent']>0 else 0:.1f}%
+                        <div style="text-align:right;">
+                            <div style="font-size:1.1em; font-weight:bold; color:{p_col};">
+                                {'+' if row['pnl'] > 0 else ''}${row['pnl']:,.2f}
+                            </div>
+                            <div style="font-size:0.75em; color:#999;">S: ${row['spent']:,.2f} | E: ${row['earned']:,.2f}</div>
                         </div>
                     </div>
                 </div>
-            </div>
-            """
-            
-            # Container to hold card + delete button
-            c1, c2 = st.columns([0.9, 0.1])
-            with c1:
-                st.markdown(card_html, unsafe_allow_html=True)
-            with c2:
-                # Vertical alignment spacer
-                st.write("")
-                st.write("")
-                if st.button("✕", key=f"del_{row['id']}", help="Delete Entry"):
-                    db.delete_trade(row['id'], st.session_state.user_id)
-                    st.rerun()
+                """
+                
+                c_data, c_del = st.columns([0.9, 0.1])
+                with c_data:
+                    st.markdown(card_html, unsafe_allow_html=True)
+                with c_del:
+                    st.write("")
+                    if st.button("✕", key=f"del_{row['id']}"):
+                        db.delete_trade(row['id'], st.session_state.user_id)
+                        st.rerun()
 
 # --- DISPATCHER ---
 if st.session_state.user_id:
     main_app()
 else:
     login_page()
+
