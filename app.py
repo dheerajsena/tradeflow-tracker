@@ -14,37 +14,52 @@ db.init_db()
 # Custom CSS for Mobile-First Enterprise Look
 st.markdown("""
     <style>
-    /* Global Styles */
+    /* Global Styles & Theme Fixes */
     html, body, [class*="css"] {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        color: #1f2937;
+        color: #1e293b !important;
     }
     
+    /* Force Solid Background to prevent transparency issues */
     .stApp {
-        background-color: #f8fafc;
+        background-color: #f8fafc !important;
     }
 
-    /* Mobile Responsive Header */
+    /* Force Header Visibility - Fix for White-on-White */
+    h1, h2, h3, h4, h5, h6, .stMarkdown p {
+        color: #0f172a !important;
+    }
+    
     .stTitle h1 {
-        font-size: 1.8rem !important;
+        font-size: 2.2rem !important;
         font-weight: 800 !important;
-        letter-spacing: -0.025em;
-        margin-bottom: 1rem !important;
+        letter-spacing: -0.05em !important;
+        color: #0f172a !important;
+        margin-bottom: 1.5rem !important;
+        line-height: 1.2 !important;
+    }
+
+    /* Expander Labels Visibility */
+    .st-emotion-cache-p6495, .st-emotion-cache-1pxm689, p {
+        color: #334155 !important;
+    }
+
+    /* Input Field Labels */
+    label[data-testid="stWidgetLabel"] p {
+        font-weight: 600 !important;
+        color: #475569 !important;
+        font-size: 0.95rem !important;
     }
 
     /* Cards & Containers */
     .trade-card {
-        background: white;
-        padding: 1.25rem;
-        border-radius: 16px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        margin-bottom: 1rem;
-        border-left: 6px solid #3b82f6;
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-    
-    .trade-card:active {
-        transform: scale(0.98);
+        background: white !important;
+        padding: 1.5rem;
+        border-radius: 20px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+        margin-bottom: 1.25rem;
+        border: 1px solid #f1f5f9;
+        border-left: 8px solid #3b82f6;
     }
 
     .trade-card.profit { border-left-color: #10b981; }
@@ -52,65 +67,94 @@ st.markdown("""
 
     /* Metrics Refinement */
     div[data-testid="stMetric"] {
-        background: white;
-        padding: 1rem !important;
-        border-radius: 12px;
-        border: 1px solid #f1f5f9;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        background: white !important;
+        padding: 1.25rem !important;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+    
+    div[data-testid="stMetricLabel"] p {
+        color: #64748b !important;
+        font-weight: 500 !important;
     }
     
     div[data-testid="stMetricValue"] {
-        font-size: 1.4rem !important;
-        font-weight: 700 !important;
+        color: #0f172a !important;
+        font-size: 1.6rem !important;
+        font-weight: 800 !important;
     }
 
     /* Mobile Friendly Buttons */
     .stButton > button {
         width: 100%;
-        height: 3.5rem !important; /* Larger touch target */
-        border-radius: 12px !important;
-        font-weight: 600 !important;
-        text-transform: none;
-        letter-spacing: 0.01em;
-        background-color: #1e293b !important;
-        color: white !important;
+        height: 3.8rem !important;
+        border-radius: 14px !important;
+        font-weight: 700 !important;
+        font-size: 1.1rem !important;
+        background-color: #0f172a !important;
+        color: #ffffff !important;
         border: none !important;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        transition: transform 0.1s ease !important;
     }
 
-    .stButton > button:hover {
-        background-color: #334155 !important;
-        transform: translateY(-1px);
+    .stButton > button:active {
+        transform: scale(0.97);
     }
 
-    /* Input Fields for Mobile */
+    /* Fix Input Fields - Removed Dark Blocks */
     .stTextInput input, .stNumberInput input, .stSelectbox [data-baseweb="select"] {
-        height: 3.5rem !important;
-        border-radius: 12px !important;
-        border: 1px solid #e2e8f0 !important;
-        font-size: 1rem !important;
+        background-color: #ffffff !important;
+        color: #0f172a !important;
+        height: 3.8rem !important;
+        border-radius: 14px !important;
+        border: 2px solid #e2e8f0 !important;
+        font-size: 1.1rem !important;
+    }
+    
+    .stTextInput input:focus, .stNumberInput input:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
     }
 
     /* Tab Optimization */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
-        background-color: transparent;
+        gap: 8px;
+        background-color: #f1f5f9;
+        padding: 6px;
+        border-radius: 14px;
     }
     
     .stTabs [data-baseweb="tab"] {
-        background-color: white;
-        border-radius: 8px;
-        padding: 8px 16px;
-        border: 1px solid #e2e8f0;
+        flex-grow: 1;
+        background-color: transparent !important;
+        border-radius: 10px !important;
+        color: #64748b !important;
+        font-weight: 600 !important;
+        border: none !important;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background-color: white !important;
+        color: #0f172a !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
     }
 
-    /* Hide Sidebar on small screens by default */
+    /* Utility */
+    .stExpander {
+        border-radius: 16px !important;
+        border: 1px solid #e2e8f0 !important;
+        background: white !important;
+    }
+    
     @media (max-width: 768px) {
-        .stMetricValue { font-size: 1.2rem !important; }
-        .stMarkdown h3 { font-size: 1.3rem !important; }
+        .stTitle h1 { font-size: 1.6rem !important; }
+        div[data-testid="stMetricValue"] { font-size: 1.25rem !important; }
     }
     </style>
 """, unsafe_allow_html=True)
+
 
 
 # Session State for Auth
